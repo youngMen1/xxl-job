@@ -19,6 +19,9 @@ import java.io.OutputStream;
 
 /**
  * Created by xuxueli on 17/5/10.
+ * <p>
+ * 任务调度中心对外提供注册地址/api用来接受任务执行器注册的相关服务器信息
+ * xxl-job admin通过JobApiController来对外提供/api接口
  */
 @Controller
 public class JobApiController {
@@ -26,15 +29,20 @@ public class JobApiController {
 
     private RpcResponse doInvoke(HttpServletRequest request) {
         try {
-            // deserialize request
+            // deserialize request  反序列化请求
             byte[] requestBytes = HttpClientUtil.readBytes(request);
-            if (requestBytes == null || requestBytes.length==0) {
+            if (requestBytes == null || requestBytes.length == 0) {
                 RpcResponse rpcResponse = new RpcResponse();
                 rpcResponse.setError("RpcRequest byte[] is null");
                 return rpcResponse;
             }
+            // 反序列化数据
             RpcRequest rpcRequest = (RpcRequest) HessianSerializer.deserialize(requestBytes, RpcRequest.class);
 
+            /**
+             * 调用服务注册方法 在NetComServerFactory类中调用invokeService方法，
+             * 根据反射调用AdminBiz接口的实现类AdminBizImpl的register方法完成服务注册操作
+             */
             // invoke
             RpcResponse rpcResponse = NetComServerFactory.invokeService(rpcRequest, null);
             return rpcResponse;
@@ -47,8 +55,15 @@ public class JobApiController {
         }
     }
 
+    /**
+     * 对外提供api接口
+     *
+     * @param request
+     * @param response
+     * @throws IOException
+     */
     @RequestMapping(AdminBiz.MAPPING)
-    @PermessionLimit(limit=false)
+    @PermessionLimit(limit = false)
     public void api(HttpServletRequest request, HttpServletResponse response) throws IOException {
 
         // invoke

@@ -42,6 +42,13 @@ public class NetComServerFactory  {
 	public static void setAccessToken(String accessToken) {
 		NetComServerFactory.accessToken = accessToken;
 	}
+
+	/**
+	 * 根据反射调用AdminBiz接口的实现类AdminBizImpl的register方法完成服务注册操作
+	 * @param request
+	 * @param serviceBean
+	 * @return
+	 */
 	public static RpcResponse invokeService(RpcRequest request, Object serviceBean) {
 		if (serviceBean==null) {
 			serviceBean = serviceMap.get(request.getClassName());
@@ -62,12 +69,16 @@ public class NetComServerFactory  {
 		}
 
 		try {
+			// 接口AdminBiz的实现类AdminBizImpl
 			Class<?> serviceClass = serviceBean.getClass();
+			// AdminBiz的register方法
 			String methodName = request.getMethodName();
 			Class<?>[] parameterTypes = request.getParameterTypes();
 			Object[] parameters = request.getParameters();
 
 			FastClass serviceFastClass = FastClass.create(serviceClass);
+
+			// 调用AdminBizImpl的register方法
 			FastMethod serviceFastMethod = serviceFastClass.getMethod(methodName, parameterTypes);
 
 			Object result = serviceFastMethod.invoke(serviceBean, parameters);
