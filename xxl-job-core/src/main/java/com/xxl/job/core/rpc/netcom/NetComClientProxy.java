@@ -29,6 +29,11 @@ public class NetComClientProxy implements FactoryBean<Object> {
 		this.accessToken = accessToken;
 	}
 
+	/**
+	 * 在XxlJobExecutor被调用时执行getObject方法，完成向任务调度中心发送请求进行服务注册操作。
+	 * @return
+	 * @throws Exception
+	 */
 	@Override
 	public Object getObject() throws Exception {
 		return Proxy.newProxyInstance(Thread.currentThread()
@@ -53,7 +58,9 @@ public class NetComClientProxy implements FactoryBean<Object> {
 	                    request.setParameterTypes(method.getParameterTypes());
 	                    request.setParameters(args);
 
+
 	                    // send
+						// 向任务调度中心发送请求进行服务注册
 	                    RpcResponse response = client.send(request);
 	                    
 	                    // valid response

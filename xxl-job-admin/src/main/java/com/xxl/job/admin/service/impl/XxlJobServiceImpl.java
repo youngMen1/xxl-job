@@ -67,9 +67,15 @@ public class XxlJobServiceImpl implements XxlJobService {
 		return maps;
 	}
 
+	/**
+	 * 添加定时任务
+	 * @param jobInfo
+	 * @return
+	 */
 	@Override
 	public ReturnT<String> add(XxlJobInfo jobInfo) {
 		// valid
+		// 获取任务分组
 		XxlJobGroup group = xxlJobGroupDao.load(jobInfo.getJobGroup());
 		if (group == null) {
 			return new ReturnT<String>(ReturnT.FAIL_CODE, (I18nUtil.getString("system_please_choose")+I18nUtil.getString("jobinfo_field_jobgroup")) );
@@ -123,6 +129,7 @@ public class XxlJobServiceImpl implements XxlJobService {
 		}
 
 		// add in db
+		// 将任务持久化到数据库的xxl_job_qrtz_trigger_info
 		xxlJobInfoDao.save(jobInfo);
 		if (jobInfo.getId() < 1) {
 			return new ReturnT<String>(ReturnT.FAIL_CODE, (I18nUtil.getString("jobinfo_field_add")+I18nUtil.getString("system_fail")) );
@@ -132,6 +139,7 @@ public class XxlJobServiceImpl implements XxlJobService {
         String qz_group = String.valueOf(jobInfo.getJobGroup());
         String qz_name = String.valueOf(jobInfo.getId());
         try {
+			// 添加任务到quartz中
             XxlJobDynamicScheduler.addJob(qz_name, qz_group, jobInfo.getJobCron());
             //XxlJobDynamicScheduler.pauseJob(qz_name, qz_group);
             return ReturnT.SUCCESS;
@@ -139,6 +147,7 @@ public class XxlJobServiceImpl implements XxlJobService {
             logger.error(e.getMessage(), e);
             try {
                 xxlJobInfoDao.delete(jobInfo.getId());
+                // 删除任务
                 XxlJobDynamicScheduler.removeJob(qz_name, qz_group);
             } catch (SchedulerException e1) {
                 logger.error(e.getMessage(), e1);
@@ -215,6 +224,7 @@ public class XxlJobServiceImpl implements XxlJobService {
 		String qz_group = String.valueOf(exists_jobInfo.getJobGroup());
 		String qz_name = String.valueOf(exists_jobInfo.getId());
         try {
+			// 重新配置定时任务
             boolean ret = XxlJobDynamicScheduler.rescheduleJob(qz_group, qz_name, exists_jobInfo.getJobCron());
             return ret?ReturnT.SUCCESS:ReturnT.FAIL;
         } catch (SchedulerException e) {
@@ -231,6 +241,7 @@ public class XxlJobServiceImpl implements XxlJobService {
         String name = String.valueOf(xxlJobInfo.getId());
 
 		try {
+			// 从quartz中移除任务，并将数据库中相关数据删除
 			XxlJobDynamicScheduler.removeJob(name, group);
 			xxlJobInfoDao.delete(id);
 			xxlJobLogDao.delete(id);
@@ -249,6 +260,7 @@ public class XxlJobServiceImpl implements XxlJobService {
         String name = String.valueOf(xxlJobInfo.getId());
 
 		try {
+            // 暂停任务
             boolean ret = XxlJobDynamicScheduler.pauseJob(name, group);	// jobStatus do not store
             return ret?ReturnT.SUCCESS:ReturnT.FAIL;
 		} catch (SchedulerException e) {
@@ -264,6 +276,7 @@ public class XxlJobServiceImpl implements XxlJobService {
         String name = String.valueOf(xxlJobInfo.getId());
 
 		try {
+			// 继续任务
 			boolean ret = XxlJobDynamicScheduler.resumeJob(name, group);
 			return ret?ReturnT.SUCCESS:ReturnT.FAIL;
 		} catch (SchedulerException e) {
@@ -283,6 +296,7 @@ public class XxlJobServiceImpl implements XxlJobService {
         String name = String.valueOf(xxlJobInfo.getId());
 
 		try {
+			// 触发任务
 			XxlJobDynamicScheduler.triggerJob(name, group);
 			return ReturnT.SUCCESS;
 		} catch (SchedulerException e) {

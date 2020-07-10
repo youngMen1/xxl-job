@@ -14,6 +14,12 @@ import org.slf4j.LoggerFactory;
 public class JettyClient {
 	private static Logger logger = LoggerFactory.getLogger(JettyClient.class);
 
+	/**
+	 * 在JettyClient中调用send方法完成服务注册操作
+	 * @param request
+	 * @return
+	 * @throws Exception
+	 */
 	public RpcResponse send(RpcRequest request) throws Exception {
 		try {
 			// serialize request
@@ -25,6 +31,7 @@ public class JettyClient {
 				reqURL = "http://" + request.getServerAddress() + "/";	// IP:PORT, need parse to url
 			}
 
+			// 发送post请求进行服务注册，简单注册一下IP和端口信息等
 			// remote invoke
 			byte[] responseBytes = HttpClientUtil.postRequest(reqURL, requestBytes);
 			if (responseBytes == null || responseBytes.length==0) {

@@ -182,6 +182,7 @@ public final class XxlJobDynamicScheduler implements ApplicationContextAware {
      */
 	public static boolean addJob(String jobName, String jobGroup, String cronExpression) throws SchedulerException {
     	// TriggerKey : name + group
+        // 创建定时器别名
         TriggerKey triggerKey = TriggerKey.triggerKey(jobName, jobGroup);
         JobKey jobKey = new JobKey(jobName, jobGroup);
         
@@ -193,11 +194,13 @@ public final class XxlJobDynamicScheduler implements ApplicationContextAware {
         
         // CronTrigger : TriggerKey + cronExpression	// withMisfireHandlingInstructionDoNothing 忽略掉调度终止过程中忽略的调度
         CronScheduleBuilder cronScheduleBuilder = CronScheduleBuilder.cronSchedule(cronExpression).withMisfireHandlingInstructionDoNothing();
+        // 创建cron定时器
         CronTrigger cronTrigger = TriggerBuilder.newTrigger().withIdentity(triggerKey).withSchedule(cronScheduleBuilder).build();
 
         // JobDetail : jobClass
+        // 定时执行类
 		Class<? extends Job> jobClass_ = RemoteHttpJobBean.class;   // Class.forName(jobInfo.getJobClass());
-        
+        // 创建任务
 		JobDetail jobDetail = JobBuilder.newJob(jobClass_).withIdentity(jobKey).build();
         /*if (jobInfo.getJobData()!=null) {
         	JobDataMap jobDataMap = jobDetail.getJobDataMap();
@@ -206,6 +209,7 @@ public final class XxlJobDynamicScheduler implements ApplicationContextAware {
 		}*/
         
         // schedule : jobDetail + cronTrigger
+        // 添加定时任务到quartz
         Date date = scheduler.scheduleJob(jobDetail, cronTrigger);
 
         logger.info(">>>>>>>>>>> addJob success, jobDetail:{}, cronTrigger:{}, date:{}", jobDetail, cronTrigger, date);
@@ -232,7 +236,7 @@ public final class XxlJobDynamicScheduler implements ApplicationContextAware {
         // TriggerKey : name + group
         TriggerKey triggerKey = TriggerKey.triggerKey(jobName, jobGroup);
         CronTrigger oldTrigger = (CronTrigger) scheduler.getTrigger(triggerKey);
-
+        // 任务存在直接更新一下
         if (oldTrigger != null) {
             // avoid repeat
             String oldCron = oldTrigger.getCronExpression();
@@ -247,6 +251,7 @@ public final class XxlJobDynamicScheduler implements ApplicationContextAware {
             // rescheduleJob
             scheduler.rescheduleJob(triggerKey, oldTrigger);
         } else {
+            // 不存在和直接创建新的任务类似
             // CronTrigger : TriggerKey + cronExpression
             CronScheduleBuilder cronScheduleBuilder = CronScheduleBuilder.cronSchedule(cronExpression).withMisfireHandlingInstructionDoNothing();
             CronTrigger cronTrigger = TriggerBuilder.newTrigger().withIdentity(triggerKey).withSchedule(cronScheduleBuilder).build();
@@ -282,6 +287,7 @@ public final class XxlJobDynamicScheduler implements ApplicationContextAware {
         TriggerKey triggerKey = TriggerKey.triggerKey(jobName, jobGroup);
         boolean result = false;
         if (checkExists(jobName, jobGroup)) {
+            // 删除任务
             result = scheduler.unscheduleJob(triggerKey);
             logger.info(">>>>>>>>>>> removeJob, triggerKey:{}, result [{}]", triggerKey, result);
         }
@@ -325,6 +331,7 @@ public final class XxlJobDynamicScheduler implements ApplicationContextAware {
         
         boolean result = false;
         if (checkExists(jobName, jobGroup)) {
+            // 继续任务
             scheduler.resumeTrigger(triggerKey);
             result = true;
             logger.info(">>>>>>>>>>> resumeJob success, triggerKey:{}", triggerKey);

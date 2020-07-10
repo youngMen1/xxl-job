@@ -103,7 +103,9 @@ public class XxlJobExecutor implements ApplicationContextAware {
         JobLogFileCleanThread.getInstance().toStop();
     }
 
-
+    /**
+     * 当存在多个任务调度中心时，创建代理类并注册，在NetComClientProxy
+     */
     // ---------------------- admin-client ----------------------
     private static List<AdminBiz> adminBizList;
     private static void initAdminBizList(String adminAddresses, String accessToken) throws Exception {
